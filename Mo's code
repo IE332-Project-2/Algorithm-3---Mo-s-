@@ -1,0 +1,134 @@
+#install packages
+library(reticulate)
+library(jpeg)
+library(tidyverse)
+library(keras)
+library(tensorflow)
+
+install_keras()
+install_tensorflow(extra_packages="pillow")
+
+#Setwd to where files are
+setwd("C:/Users/computeruser/Downloads/P2")
+getwd()
+
+#Loading model 
+model <- load_model_tf("./dandelion_model")
+summary(model)
+
+random <- function (x, P) {
+  #new_image_1 <- image_load(paste("./grass/",image,sep=""))#, size_required = size_required)
+  #x <- image_to_array(new_image_1)
+  horz_ax <- length(x[,1,1])
+  vert_ax <- length(x[1,,1])
+  for (i in 1:horz_ax) {
+    for (j in 1:vert_ax) {
+      if ((((j-1) * horz_ax) + i) %% P == 0) { 
+        x[i,j,1] <- 1 #red
+        x[i,j,2] <- 1 #green
+        x[i,j,3] <- 0 #blue
+      }
+    }
+  }
+  # updated image with array
+  # save "./grass/modified_grass.jpg" as image
+  writeJPEG(x, "./grass/modified_grass.jpg")
+  
+  # Run file
+  changed_image_grass <- jpeg::readJPEG("./grass/modified_grass.jpg")
+  
+  # View image
+  graphics::plot(1, type="n", xlim=c(0, 1), ylim=c(0, 1), xlab="", ylab="")
+  graphics::rasterImage(changed_image_grass, 0, 0, 1, 1)
+}
+
+
+
+#required size
+size_required <- c(224, 224)
+
+#Lecture continued 
+res=c("","")
+f=list.files("./grass")
+for (i in f){
+  new_image_1 <- image_load(paste("./grass/",i,sep=""),
+                           size_required = size_required)
+  x <- image_to_array(new_image_1)
+  #x <- array_reshape(x, c(1, dim(x)))
+  x <- x/255
+  
+  #Manipulating image randomly
+  P <- 5
+  random(x, P)
+  
+  #Starting image from before
+  new_image_2 <- image_load("./grass/modified_grass.jpg",
+                        size_required = size_required)
+  new <- image_to_array(new_image_2)
+  new <- array_reshape(new, c(1, dim(new)))
+  
+  
+  pred <- model %>% predict(new)
+  #if(pred[1,2]<0.50){
+  print(pred)
+  #}
+}
+
+res=c("","")
+f=list.files("./dandelions")
+for (i in f){
+  new_image_1 <- image_load(paste("./dandelions/",i,sep=""),
+                           size_required = size_required)
+  x <- image_to_array(new_image_1)
+  #x <- array_reshape(x, c(1, dim(x)))
+  x <- x/255
+  
+  #Manipulating picture randomly
+  P <- 5
+  random(x, P)
+  
+  #Loading new image 2
+  new_image_2 <- image_load("./grass/modified_grass.jpg",
+                        size_required = size_required)
+  new <- image_to_array(new_image_2)
+  new <- array_reshape(new, c(1, dim(new)))
+  
+  
+  pred <- model %>% predict(new)
+  #if(pred[1,2]<0.50){
+  print(pred)
+  #}
+  #if(pred[1,1]<0.50){
+  #  print(i)
+  #}
+}
+
+
+
+#No image change (from brightspace)
+res=c("","")
+f=list.files("./grass")
+for (i in f){
+  new_image_1 <- image_load(paste("./grass/",i,sep=""),
+                           size_required = size_required)
+  x <- image_to_array(new_image_1)
+  x <- array_reshape(x, c(1, dim(x)))
+  x <- x/255
+  
+  pred <- model %>% predict(x)
+  print(pred)
+}
+
+res=c("","")
+f=list.files("./dandelions")
+for (i in f){
+  new_image_1 <- image_load(paste("./dandelions/",i,sep=""),
+                           size_required = size_required)
+  x <- image_to_array(new_image_1)
+  x <- array_reshape(x, c(1, dim(x)))
+  x <- x/255
+  
+  pred <- model %>% predict(x)
+  print(pred)
+}
+
